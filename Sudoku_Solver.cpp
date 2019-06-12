@@ -56,7 +56,6 @@ bool Sudoku_Solver::solve_helper(std::unordered_map<unsigned short, unsigned sho
 			//if current block is in cumulative conflict set
 			auto ccs_it = cumulative_conflict_set.find(key);
 			if (ccs_it != cumulative_conflict_set.end() && ccs_it->second == *it) {
-				cumulative_conflict_set.erase(key);
 				continue; //continue search with next value
 			} else {
 				return false; //move back up a depth
@@ -72,7 +71,7 @@ bool Sudoku_Solver::solve_helper(std::unordered_map<unsigned short, unsigned sho
 	} else {
 		//current block was in cumulative_conflict_set,
 		//but all its values led to a conflict
-		//cumulative_conflict_set.erase(key);
+		cumulative_conflict_set.erase(key);
 		auto &cs = sudoku.get_conflict_set(row, col);
 		for (auto it = cs.begin(); it != cs.end(); ++it) {
 			cumulative_conflict_set[it->first] = it->second;
