@@ -162,7 +162,13 @@ void Sudoku::print_board(ostream &os) const {
 	auto spacing = int (size/10+1);
 
 	for (unsigned short row = 0; row < size; ++row) {
+		if (row%small_size == 0 && row != 0) {
+			os << "\n";
+		}
 		for (unsigned short col = 0; col < size; ++col) {
+			if (col%small_size == 0 && col != 0) {
+				os << "\t";
+			}
 			os << setw(spacing) << std::left << board[row][col].val << " ";
 		}
 		os << "\n";
