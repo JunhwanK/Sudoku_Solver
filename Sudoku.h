@@ -21,7 +21,7 @@ public:
 	unsigned short val;
 	//domain: possible values the blank block can have
 	std::unordered_set<unsigned short> domain;
-	//conflict set(CS): keys and values of other blocks that eliminated a value from this block's domain
+	//conflict set: keys and values of other blocks that eliminated a value from this block's domain
 	std::unordered_map<unsigned short, unsigned short> conflict_set;
 
 	static const unsigned short BLANK = 0; //represents that a block is blank
@@ -36,6 +36,7 @@ public:
 	//			non-negative values smaller than or equal to small_size^2
 	//MODIFIES: board, small_size, size, num_blank, Domain
 	//EFFECTS: creates sudoku object (does not compute sudoku blocks' domains)
+	//			throws Value_Error() if input value is invalid (i.e. val > size)
 	Sudoku(std::istream &is);
 
 	//REQUIRES: row, col are smaller than size
@@ -87,7 +88,7 @@ public:
 	//REQUIRES: row, col are smaller than size
 	//MODIFIES: domain of block at (row,col)
 	//EFFECTS: updates the domain of block at (row,col) to contrain
-	//			it's potential values iff the block is blank
+	//			its potential values iff the block is blank
 	void update_domain(unsigned short row, unsigned short col);
 	
 	//MODIFIES: domains of all blank blocks in sudoku
@@ -163,6 +164,7 @@ private:
 	unsigned short num_blank;
 
 	//contains natural numbers [1:size] inclusive for easy initialization of domains
+	//MUST NOT be modified although it is not const
 	std::unordered_set<unsigned short> Domain;
 
 	//REQUIRES: row, col are smaller than size
@@ -176,7 +178,7 @@ private:
 //Exception thrown when trying to access a non-existant, out-of-range sudoku block 
 class Coordinate_Error {
 public:
-	Coordinate_Error(char const *function_name, 
+	Coordinate_Error(const char *function_name, 
 					unsigned short row, unsigned short col,
 					unsigned short other_row, unsigned short other_col,
 					unsigned short size) {
@@ -187,7 +189,7 @@ public:
 		msg = os.str();
 	}
 
-	Coordinate_Error(char const *function_name, 
+	Coordinate_Error(const char *function_name, 
 					unsigned short row, unsigned short col,
 					unsigned short size) {
 		std::ostringstream os;
@@ -213,7 +215,7 @@ public:
 //thrown by set_value()
 class Value_Error {
 public:
-	Value_Error(std::string function_name, unsigned short val, unsigned short size) {
+	Value_Error(const char *function_name, unsigned short val, unsigned short size) {
 		std::ostringstream os;
 		os << "In function "<<function_name<<": gave invalid, out-of-range val ("<<(val)<<") "
 				"to a block in "<<size<<"x"<<size<<" sudoku.\n";

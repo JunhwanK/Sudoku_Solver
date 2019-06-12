@@ -11,6 +11,7 @@ Sudoku_Solver::Sudoku_Solver(istream &is)
 	tracker.resize(size);
 }
 
+
 bool Sudoku_Solver::solve_helper(std::unordered_map<unsigned short, unsigned short> &cumulative_conflict_set, size_t depth) {
 	//find block with smallest domain
 	unsigned short row = (unsigned short) size; //temporary place holder
@@ -44,7 +45,7 @@ bool Sudoku_Solver::solve_helper(std::unordered_map<unsigned short, unsigned sho
 	for (auto it = domain.begin(); it != domain.end(); ++it) {
 		set_val_and_update(row, col, *it);
 
-		//stop search when sudoku board is full (entirely through legel moves)
+		//stop search when sudoku board is full (which is entirely through legel moves)
 		if (sudoku.get_num_blank() == 0) {
 			return true;
 		}
@@ -53,9 +54,11 @@ bool Sudoku_Solver::solve_helper(std::unordered_map<unsigned short, unsigned sho
 		//or if next iteration could not solve conflict
 		if (solve_helper(cumulative_conflict_set, depth+1) == false) {
 			unset_val_and_update(row, col); //undo
-			//if current block is in cumulative conflict set
+			//if current block's key and val is in cumulative conflict set
 			auto ccs_it = cumulative_conflict_set.find(key);
 			if (ccs_it != cumulative_conflict_set.end() && ccs_it->second == *it) {
+				//if erase here, little less memory overhead but slower speed
+				//cumulative_conflict_set.erase(key);
 				continue; //continue search with next value
 			} else {
 				return false; //move back up a depth
@@ -70,7 +73,8 @@ bool Sudoku_Solver::solve_helper(std::unordered_map<unsigned short, unsigned sho
 		throw Sudoku_Error(); //exhausted search space
 	} else {
 		//current block was in cumulative_conflict_set,
-		//but all its values led to a conflict
+		//but all its values led to a conflict.
+		//if erase here, little more memory overhead but faster speed
 		cumulative_conflict_set.erase(key);
 		auto &cs = sudoku.get_conflict_set(row, col);
 		for (auto it = cs.begin(); it != cs.end(); ++it) {
@@ -83,13 +87,15 @@ bool Sudoku_Solver::solve_helper(std::unordered_map<unsigned short, unsigned sho
 
 bool Sudoku_Solver::solve() {
 	if (sudoku.is_solved()) {
-		return true;
+		return true; //sudoku is already solved
 	} else if (sudoku.get_num_blank() == 0) {
-		throw Sudoku_Error();
+		throw Sudoku_Error(); //sudoku is invalid
 	}
 
+	//check sudoku is valid
 	pre_check();
 
+	//solve sudoku until CBJ algorithm is needed
 	pre_solve();
 
 	if (sudoku.is_solved()) {
@@ -120,7 +126,8 @@ void Sudoku_Solver::track_row(unsigned short row) {
 	tracker[row] = make_pair(min_col, min_domain_size);
 }
 
-void Sudoku_Solver::pre_check() {
+
+void Sudoku_Solver::pre_check() const {
 	for (unsigned short i = 0; i < size; ++ i) {
 		if (sudoku.check_row(i) == false) {
 			throw Sudoku_Error();
@@ -133,6 +140,7 @@ void Sudoku_Solver::pre_check() {
 		}
 	}
 }
+
 
 void Sudoku_Solver::pre_solve() {
 	//update all domain
@@ -162,6 +170,7 @@ void Sudoku_Solver::pre_solve() {
 	}
 }
 
+
 void Sudoku_Solver::set_val_and_update(unsigned short row, unsigned short col, unsigned short val) {
 	sudoku.set_val(row, col, val);
 
@@ -176,7 +185,7 @@ void Sudoku_Solver::set_val_and_update(unsigned short row, unsigned short col, u
 			sudoku.conflict_set_insert(i,col,row,col);
 		}
 		auto new_size = sudoku.get_domain_size(i, col);
-		//update tracking (note domain size changes by max 1)
+		//update tracking (note: domain sizes change by max 1)
 		if (new_size <= tracker_val) {
 			//faster pruning using operator<= by moving to a related block next (maybe?)
 			tracker[i] = make_pair(col, new_size);
@@ -225,6 +234,7 @@ void Sudoku_Solver::set_val_and_update(unsigned short row, unsigned short col, u
 	track_row(row);
 }
 
+
 void Sudoku_Solver::unset_val_and_update(unsigned short row, unsigned short col) {
 	unsigned short val = sudoku.get_val(row, col);
 
@@ -237,11 +247,12 @@ void Sudoku_Solver::unset_val_and_update(unsigned short row, unsigned short col)
 		if (sudoku.get_val(i, col) != Block::BLANK) {
 			continue;
 		}
-		if (tracker[i].first == col) {
-			need_track.insert(i);
-		}
 		if (sudoku.conflict_set_erase(i, col, row, col)) {
 			sudoku.domain_insert(i, col, val);
+			if (tracker[i].first == col) {
+				//need tracking if the block pointed by the tracker is being modified
+				need_track.insert(i);
+			}
 		}
 	}
 
@@ -267,11 +278,12 @@ void Sudoku_Solver::unset_val_and_update(unsigned short row, unsigned short col)
 			if (sudoku.get_val(i, j) != Block::BLANK) {
 				continue;
 			}
-			if (tracker[i].first == j) {
-				need_track.insert(i);
-			}
 			if (sudoku.conflict_set_erase(i, j, row, col)) {
 				sudoku.domain_insert(i, j, val);
+				if (tracker[i].first == j) {
+					//need tracking if the block pointed by the tracker is being modified
+					need_track.insert(i);
+				}
 			}
 		}
 	}

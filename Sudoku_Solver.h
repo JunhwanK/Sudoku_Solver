@@ -11,8 +11,8 @@
 #include "Sudoku.h"
 
 //A sudoku solver that uses depth first search and
-//applys 'forward checking' and 'conflict-direct backjumping'
-//to solve any n by n sudoku
+//applys 'forward checking', 'conflict-direct backjumping'
+//and 'dynamic variable ordering' to solve any n by n sudoku
 class Sudoku_Solver {
 public:
 	//REQUIRES: istream argument satisfies the requirement for Sudoku class constructor
@@ -21,7 +21,8 @@ public:
 	Sudoku_Solver(std::istream &is);
 
 	//MODIFIES: sudoku, tracker
-	//EFFECTS: attempts to solve sudoku, throws Sudoku_Error() if unsolvable
+	//EFFECTS: attempts to solve sudoku, returns true if solved
+	// 		throws Sudoku_Error() if unsolvable or if sudoku board is invalid
 	bool solve();
 
 	//EFFECTS: prints sudoku board to ostream
@@ -32,12 +33,15 @@ public:
 
 private:
 	
-	void pre_check();
+	//EFFECTS: throws Sudoku_Error() if initial sudoku block values
+	// 		have an invalid duplicate in the same row, col or sqaure
+	void pre_check() const;
 
 	//MODIFIES: sudoku, tracker
 	//EFFECTS: updates domains of all empty blocks, then solves sudoku only to 
 	//		the point all values are 100% certain
-	// 		i.e. fill in sudoku until none of the blocks have domain size of 1
+	// 		i.e. fill in sudoku blocks with domain size 1, until none of the blocks have domain size of 1
+	//		throws Sudoku_Error() if sudoku is unsolvable (created domain size of 0 during this process)
 	void pre_solve();
 
 	Sudoku sudoku;
@@ -76,6 +80,9 @@ private:
 	//MODIFIES: cumulative_conflict_set, sudoku, tracker
 	//EFFECTS: recursively calls itself to solve the sudoku using
 	// 		depth first search that uses forward tracking and conflict-directed back jumping
+	//		returns true is sudoku is solved
+	//		returns false if found conflict or if current block's (key,val) is not in cumulative_conflict_set
+	//		throws Sudoku_Error() if sudoku is unsolvable
 	bool solve_helper(std::unordered_map<unsigned short, unsigned short>&cumulative_conflict_set, size_t depth = 0);
 };
 
