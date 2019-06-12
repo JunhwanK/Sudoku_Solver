@@ -266,13 +266,15 @@ unsigned short Sudoku::get_small_size() const {
 	return small_size;
 }
 
-bool Sudoku::conflict_set_insert(unsigned short row, unsigned short col,
+void Sudoku::conflict_set_insert(unsigned short row, unsigned short col,
 								 unsigned short other_row, unsigned short other_col) {
 	if (row >= size || col >= size || other_row >= size || other_col >= size) {
 		throw Coordinate_Error("Sudoku::conflict_set_insert", row, col, other_row, other_col, size);
 	}
+	auto &cs = board[row][col].conflict_set;
 	unsigned short key = get_key(other_row, other_col);
-	return board[row][col].conflict_set.insert(key).second;
+	unsigned short val = get_val(other_row, other_col);
+	cs[key] = val;
 }
 
 bool Sudoku::conflict_set_erase(unsigned short row, unsigned short col,
@@ -298,7 +300,7 @@ unsigned short Sudoku::get_num_blank() const {
 	return num_blank;
 }
 
-const unordered_set<unsigned short>& Sudoku::get_conflict_set(unsigned short row, unsigned short col) const {
+const unordered_map<unsigned short, unsigned short>& Sudoku::get_conflict_set(unsigned short row, unsigned short col) const {
 	if (row >= size || col >= size) {
 		throw Coordinate_Error("Sudoku::get_conflict_set", row, col, size);
 	}

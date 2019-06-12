@@ -6,6 +6,7 @@
 #include <utility> //pair, make_pair()
 #include <string>
 #include <unordered_set>
+#include <unordered_map>
 
 #include "Sudoku.h"
 
@@ -30,6 +31,9 @@ public:
 	bool is_solved() const;
 
 private:
+	
+	void pre_check();
+
 	//MODIFIES: sudoku, tracker
 	//EFFECTS: updates domains of all empty blocks, then solves sudoku only to 
 	//		the point all values are 100% certain
@@ -72,14 +76,14 @@ private:
 	//MODIFIES: cumulative_conflict_set, sudoku, tracker
 	//EFFECTS: recursively calls itself to solve the sudoku using
 	// 		depth first search that uses forward tracking and conflict-directed back jumping
-	bool solve_helper(std::unordered_set<unsigned short>&cumulative_conflict_set, size_t depth = 0);
+	bool solve_helper(std::unordered_map<unsigned short, unsigned short>&cumulative_conflict_set, size_t depth = 0);
 };
 
 
 //Expection thrown when Sudoku has no solution
 class Sudoku_Error {
 public:
-	std::string msg = "Sudoku has no solution.";
+	std::string msg = "Sudoku has no solution / is invalid.";
 };
 
 

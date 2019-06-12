@@ -6,6 +6,7 @@
 #include <sstream>
 #include <string>
 #include <unordered_set>
+#include <unordered_map>
 
 
 //Representaiton of a block in a sudoku
@@ -20,8 +21,8 @@ public:
 	unsigned short val;
 	//domain: possible values the blank block can have
 	std::unordered_set<unsigned short> domain;
-	//conflict set: keys of other blocks that eliminated a value from this block's domain
-	std::unordered_set<unsigned short> conflict_set;
+	//conflict set(CS): keys and values of other blocks that eliminated a value from this block's domain
+	std::unordered_map<unsigned short, unsigned short> conflict_set;
 
 	static const unsigned short BLANK = 0; //represents that a block is blank
 };
@@ -117,9 +118,9 @@ public:
 	
 	//REQUIRES: row, col, other_row, other_col are smaller than size
 	//MODIFIES: conflict_set of block at (row,col)
-	//EFFECTS: inserts the key of the block at other_row, other_col
+	//EFFECTS: inserts the (key,val) of the block at other_row, other_col
 	//		into the conflict set of block at (row,col)
-	bool conflict_set_insert(unsigned short row, unsigned short col,
+	void conflict_set_insert(unsigned short row, unsigned short col,
 							unsigned short other_row, unsigned short other_col);
 	
 	//REQUIRES: row, col, other_row, other_col are smaller than size
@@ -137,9 +138,9 @@ public:
 	
 	//REQUIRES: row, col are smaller than size
 	//EFFECTS: returns the conflict_set of block at (row,col) by const reference
-	const std::unordered_set<unsigned short>&
+	const std::unordered_map<unsigned short, unsigned short>&
 			get_conflict_set(unsigned short row, unsigned short col) const;
-	
+
 	//EFFECTS: returns true iff sudoku is solved
 	bool is_solved() const;
 	

@@ -11,8 +11,7 @@ Sudoku_Solver::Sudoku_Solver(istream &is)
 	tracker.resize(size);
 }
 
-
-bool Sudoku_Solver::solve_helper(std::unordered_set<unsigned short> &cumulative_conflict_set, size_t depth) {
+bool Sudoku_Solver::solve_helper(std::unordered_map<unsigned short, unsigned short> &cumulative_conflict_set, size_t depth) {
 	//find block with smallest domain
 	unsigned short row = (unsigned short) size; //temporary place holder
 	unsigned short col = (unsigned short) size; //temporary place holder
@@ -26,7 +25,9 @@ bool Sudoku_Solver::solve_helper(std::unordered_set<unsigned short> &cumulative_
 
 			auto &cs = sudoku.get_conflict_set(row, col);
 			//cumulative_conflict_set.clear(); //DO NOT clear conflict_set, all conflicts matter!
-			cumulative_conflict_set.insert(cs.begin(), cs.end());
+			for (auto it = cs.begin(); it != cs.end(); ++it) {
+				cumulative_conflict_set[it->first] = it->second;
+			}
 			return false;
 
 		} else if (domain_size < min_domain_size) {
@@ -53,7 +54,9 @@ bool Sudoku_Solver::solve_helper(std::unordered_set<unsigned short> &cumulative_
 		if (solve_helper(cumulative_conflict_set, depth+1) == false) {
 			unset_val_and_update(row, col); //undo
 			//if current block is in cumulative conflict set
-			if (cumulative_conflict_set.find(key) != cumulative_conflict_set.end()) {
+			auto ccs_it = cumulative_conflict_set.find(key);
+			if (ccs_it != cumulative_conflict_set.end() && ccs_it->second == *it) {
+				cumulative_conflict_set.erase(key);
 				continue; //continue search with next value
 			} else {
 				return false; //move back up a depth
@@ -69,9 +72,11 @@ bool Sudoku_Solver::solve_helper(std::unordered_set<unsigned short> &cumulative_
 	} else {
 		//current block was in cumulative_conflict_set,
 		//but all its values led to a conflict
-		cumulative_conflict_set.erase(key);
+		//cumulative_conflict_set.erase(key);
 		auto &cs = sudoku.get_conflict_set(row, col);
-		cumulative_conflict_set.insert(cs.begin(), cs.end());
+		for (auto it = cs.begin(); it != cs.end(); ++it) {
+			cumulative_conflict_set[it->first] = it->second;
+		}
 		return false;
 	}
 }
@@ -84,6 +89,8 @@ bool Sudoku_Solver::solve() {
 		throw Sudoku_Error();
 	}
 
+	pre_check();
+
 	pre_solve();
 
 	if (sudoku.is_solved()) {
@@ -91,7 +98,7 @@ bool Sudoku_Solver::solve() {
 	}
 
 	//depth first search that uses forward checking and conflict-directed backjumping
-	unordered_set <unsigned short> cumulative_conflict_set;
+	unordered_map <unsigned short, unsigned short> cumulative_conflict_set;
 	solve_helper(cumulative_conflict_set);
 
 	return sudoku.is_solved();
@@ -112,6 +119,20 @@ void Sudoku_Solver::track_row(unsigned short row) {
 		}
 	}
 	tracker[row] = make_pair(min_col, min_domain_size);
+}
+
+void Sudoku_Solver::pre_check() {
+	for (unsigned short i = 0; i < size; ++ i) {
+		if (sudoku.check_row(i) == false) {
+			throw Sudoku_Error();
+		}
+		if (sudoku.check_col(i) == false) {
+			throw Sudoku_Error();
+		}
+		if (sudoku.check_square(i) == false) {
+			throw Sudoku_Error();
+		}
+	}
 }
 
 void Sudoku_Solver::pre_solve() {
