@@ -104,6 +104,7 @@ bool Sudoku_Solver::solve() {
 
 	//depth first search that uses forward checking and conflict-directed backjumping
 	unordered_map <unsigned short, unsigned short> cumulative_conflict_set;
+	cumulative_conflict_set.reserve(size*size);
 	solve_helper(cumulative_conflict_set);
 
 	return sudoku.is_solved();
