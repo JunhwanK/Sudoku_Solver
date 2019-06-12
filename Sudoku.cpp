@@ -21,7 +21,9 @@ Sudoku::Sudoku(istream &is) {
 	for (unsigned short row = 0; row < size; ++row) {
 		for (unsigned short col = 0; col < size; ++col) {
 			is >> val;
-			if (val == Block::BLANK) {
+			if (val > size) {
+				throw Value_Error("Sudoku constructor", val, size);
+			} else if (val == Block::BLANK) {
 				++num_blank;
 				board[row][col].key = key(row, col);
 			}
