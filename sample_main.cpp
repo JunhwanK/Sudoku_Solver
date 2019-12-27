@@ -6,8 +6,13 @@
 
 using namespace std;
 
-int main() {
-	ifstream file_in("sample_sudoku_1.txt");
+int main(int argc, char* argv[]) {
+	if (argc != 2) {
+		cout << "Usage: "<< argv[0] <<" <sudoku_file_name>\n";
+		return 1;
+	}
+
+	ifstream file_in(argv[1]);
 
 	if (!file_in.is_open()) {
 		cout << "Input file not opened\n";
